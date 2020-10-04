@@ -1,21 +1,29 @@
-# Fsharp-udp-example
+# FSharp UDP Example
 
-### Environment setup (CLI-friendly)
-http://fsharp.org/guides/mac-linux-cross-platform/
+## Environment
 
-Mono cross platform .NET framework: `brew install mono`</br>
-F# Project Builder: `brew tap samritchie/forge && brew install forge`
+1. [.NET Core 3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1)
 
-### Build and run
+## Build & Run
+
 ```
-./build.sh
-mono build/fsharpudpexample.exe
+dotnet run
 ```
 
-Dummy netcat UDP-listener: `nc -lu 127.0.0.1 3000`<br/>
-Send UDP message to client: `echo -n '{"type": "msg", "msg": "Hello World"}' | nc -u 127.0.0.1 3001`
+## Test
 
-### Build tl;dr version
-- Fake (make for F#)
-- Paket (package manager) `mono .paket/paket.exe add/remove nuget <package name>`
-- Forge (CLI project builder) `forge reference add <path to package>`
+### Client
+
+To test the UDP client, have a _netcat_ server up and running before you start this program:
+
+```sh
+nc -lu 127.0.0.1 3000
+```
+
+### Server
+
+To test the UDP server, use the commonly found _netcat_ udp client to send valid JSON:
+
+```sh
+echo -n '{"type": "msg", "msg": "Hello World"}' | nc -u 127.0.0.1 3001
+```
