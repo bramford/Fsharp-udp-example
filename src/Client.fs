@@ -32,8 +32,10 @@ let messageLoop localPort = async {
   printf "out: %s\n" (Encoding.ASCII.GetString(initMsg))
   outSocket.Close()
 
-  let rec loop(inSocket: UdpClient) = async {
+  let rec loop(inSocket: UdpClient) : Async<unit> = async {
     let! msg = getServerMsg inSocket
+    printfn "%s" (System.DateTime.UtcNow.ToString())
+    printfn "%s" (msg.ToString())
     let parseResult: Response ParseResult = parseJson (Encoding.ASCII.GetString(msg))
     match parseResult with
     | Error e ->
@@ -42,10 +44,8 @@ let messageLoop localPort = async {
     | Ok r ->
       printfn "in: %A" r.Msg
       ()
-    loop inSocket
+    return! loop inSocket
   }
 
-  return! async {
-    do! loop inSocket
-  }
+  return! loop inSocket
 }
