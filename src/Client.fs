@@ -36,13 +36,13 @@ let messageLoop localPort = async {
     let! msg = getServerMsg inSocket
     let parseResult: Response ParseResult = parseJson (Encoding.ASCII.GetString(msg))
     match parseResult with
-            | Error e -> printf "Failed parsing: %s\n" e
-            | Ok r ->
-                printfn "in: %A" r.Msg
-                ()
-    match msg with
-      | ans ->
-        return ()
+    | Error e ->
+      printf "Failed parsing: %s\n" e
+      ()
+    | Ok r ->
+      printfn "in: %A" r.Msg
+      ()
+    loop inSocket
   }
 
   return! async {
