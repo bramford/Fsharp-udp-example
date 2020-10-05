@@ -7,44 +7,58 @@ open System.Text
 open Fleece
 open Messages
 
-let serverAddr = "127.0.0.1"
-let serverPort = 3000
-let clientAddr = "127.0.0.1"
-let serverEndPoint = IPEndPoint(IPAddress.Parse(serverAddr), serverPort)
+type RaceWinner =
+| Data of byte array
+| Sleep
 
-let getServerMsg(inSocket: UdpClient) = async {
-  let! asyncData = inSocket.ReceiveAsync() |> Async.AwaitTask
-  return asyncData.Buffer
+let getResponseMsg(socket: UdpClient) = async {
+  let! asyncData = socket.ReceiveAsync() |> Async.AwaitTask
+  return Some (Data asyncData.Buffer)
 }
 
-let messageLoop localPort = async {
+let sleepFor (milliseconds: int) = async {
+  let! _ = System.Threading.Tasks.Task.Delay(milliseconds) |> Async.AwaitTask
+  return Some Sleep
+}
+
+let run (address : string) port = async {
+  let address = "127.0.0.1"
+  let outEndpoint = IPEndPoint(IPAddress.Parse(address), port)
   use outSocket = new UdpClient()
-  let clientEndPoint = IPEndPoint(IPAddress.Any, localPort)
-  let inSocket = new UdpClient(clientEndPoint)
-  outSocket.Connect(serverEndPoint)
+  outSocket.Connect(outEndpoint)
 
-  let initMsg = Encoding.ASCII.GetBytes((toJson {
-                Connect.Type = "connect"
-                Address = clientAddr
-              }).ToString())
+  let inSocket = new UdpClient()
+  let inEndpoint = outSocket.Client.LocalEndPoint :?> IPEndPoint
+  inSocket.Connect(inEndpoint)
 
-  let! _ = outSocket.SendAsync(initMsg, initMsg.Length) |> Async.AwaitTask
-  printf "out: %s\n" (Encoding.ASCII.GetString(initMsg))
-  outSocket.Close()
+  let rec loop () = async {
+    let connectMsg = Encoding.ASCII.GetBytes((toJson {
+                  Connect.Id = System.Guid.NewGuid.ToString()
+                  State = "connect"
+                }).ToString())
+    let! _ = outSocket.SendAsync(connectMsg, connectMsg.Length) |> Async.AwaitTask
+    printf "CLIENT: Message sent, awaiting response..."
+    let! winner = Async.Choice [
+      getResponseMsg inSocket;
+      sleepFor 10000;
+    ]
+    match winner with
+    | Some Sleep -> 
+      printf "CLIENT: No response, starting again\n"
+    | Some (Data d) -> 
+      let parseResult =
+          parseJson (Encoding.ASCII.GetString(d))
+      match parseResult with
+      | Error e ->
+        printf "CLIENT: Failed to parse response: %s\n" e
+        ()
+      | Ok r ->
+        printfn "CLIENT: Response: id = %s, state = %s" r.Id r.State
+        ()
+    | None -> 
+      printf "CLIENT: Unexpected result, starting again\n"
 
-  let rec loop(inSocket: UdpClient) : Async<unit> = async {
-    let! msg = getServerMsg inSocket
-    let parseResult =
-        parseJson (Encoding.ASCII.GetString(msg))
-    match parseResult with
-    | Error e ->
-      printf "Failed parsing: %s\n" e
-      ()
-    | Ok r ->
-      printfn "in: %A" r.Msg
-      ()
-    return! loop inSocket
+    return! loop ()
   }
-
-  return! loop inSocket
+  return! loop ()
 }

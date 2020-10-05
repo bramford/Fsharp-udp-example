@@ -6,33 +6,30 @@ open Fleece
 open Fleece.Operators
 
 type Connect = {
-  Type: string
-  Address: string
+  Id: string
+  State: string
 }
 
-type Connect with
+type Connect
+  with
   static member ToJSON (c: Connect) =
     jobj [
-      "type" .= c.Type
-      "address" .= c.Address
+      "id" .= c.Id
+      "state" .= c.State
     ]
 
-type Response = {
-  Type: string
-  Msg: string
-}
-
-type Response with
-  static member FromJSON (_: Response) =
+type Connect
+  with
+  static member FromJSON (_: Connect) =
     function
     | JObject o ->
-      let ``type`` = o .@ "type"
-      let msg = o .@ "msg"
-      match ``type``, msg with
-      | Success ``type``, Success msg ->
+      let id = o .@ "id"
+      let ``state`` = o .@ "state"
+      match id, ``state`` with
+      | Success id, Success ``state`` ->
         Success {
-          Response.Type = ``type``
-          Response.Msg = msg
+          Connect.Id = ``state``
+          Connect.State = id
         }
       | x -> Failure (sprintf "Error parsing Response: %A" x)
     | x -> Failure (sprintf "Expected Response, got %A" x)
