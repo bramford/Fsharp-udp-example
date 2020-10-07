@@ -2,11 +2,22 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "UdpExample",
+            "name": "Client",
             "type": "coreclr",
             "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/src/bin/Debug/netcoreapp3.1/UdpExample.dll",
+            "preLaunchTask": "build-Client",
+            "program": "${workspaceFolder}/src/Client/bin/Debug/netcoreapp3.1/UdpExample.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Server",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-Server",
+            "program": "${workspaceFolder}/src/Server/bin/Debug/netcoreapp3.1/UdpExample.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
