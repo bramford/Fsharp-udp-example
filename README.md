@@ -4,26 +4,30 @@
 
 1. [.NET Core 3.1](https://dotnet.microsoft.com/download/dotnet-core/3.1)
 
-## Build & Run
+## Build
 
 ```
-dotnet run
+dotnet build
 ```
 
-## Test
+## Run
 
 ### Client
 
-To test the UDP client, have a _netcat_ server up and running before you start this program:
+To test the UDP client, start a _netcat_ server before running the program:
 
 ```sh
-nc -lu 127.0.0.1 3000
+cd Client
+nc -lu 127.0.0.1 3000 &
+dotnet run
 ```
 
 ### Server
 
-To test the UDP server, use the commonly found _netcat_ udp client to send valid JSON:
+To test the UDP server, start the server and then use a _netcat_ udp client to send valid JSON:
 
 ```sh
-echo -n '{"type": "msg", "msg": "Hello World"}' | nc -u 127.0.0.1 3001
+cd Server
+dotnet run &
+echo -n '{"type": "connect", "id": "$(uuidgen)"}' | nc -u 127.0.0.1 3001
 ```

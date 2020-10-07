@@ -5,7 +5,7 @@ open System.Net
 open System.Net.Sockets
 open System.Text
 open Fleece
-open Messages
+open Lib
 
 let getServerMsg(inSocket: UdpClient) = async {
   let! asyncData = inSocket.ReceiveAsync() |> Async.AwaitTask
@@ -49,3 +49,13 @@ let run port = async {
 
   return! loop inSocket None
 }
+
+[<EntryPoint>]
+let main(argv :string[]) =
+  [
+    run 3000;
+  ]
+  |> Async.Parallel
+  |> Async.Ignore
+  |> Async.RunSynchronously
+  0

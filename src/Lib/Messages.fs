@@ -1,4 +1,4 @@
-namespace Messages
+namespace Lib
 
 open System
 open System.Json
