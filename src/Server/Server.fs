@@ -19,14 +19,17 @@ let run port = async {
   let rec loop(inSocket: UdpClient) (outSocket: UdpClient option) : Async<unit> = async {
       let! msg = getServerMsg inSocket
 
-      let outSocket =
+      let outSocket : UdpClient option =
         match outSocket with
-        | Some v -> v
+        | Some v -> outSocket
         | None ->
-            let outSocket = new UdpClient(inSocket.Client.RemoteEndPoint.AddressFamily)
-            let outEndpoint = inSocket.Client.RemoteEndPoint :?> IPEndPoint
-            outSocket.Connect(outEndpoint)
-            outSocket
+            try
+              let outSocket = new UdpClient(inSocket.Client.RemoteEndPoint.AddressFamily)
+              let outEndpoint = inSocket.Client.RemoteEndPoint :?> IPEndPoint
+              outSocket.Connect(outEndpoint)
+              Some outSocket
+            with
+            | _ -> None
 
       let parseResult =
           parseJson (Encoding.ASCII.GetString(msg))
@@ -40,11 +43,16 @@ let run port = async {
                         Connect.Id = r.Id
                         State = "received"
                       }).ToString())
-          let! _ = outSocket.SendAsync(responseMsg, responseMsg.Length) |> Async.AwaitTask
-          printfn "SERVER: Sending response: id = %s, state = %s" r.Id r.State
-          outSocket.Close()
-          ()
-      return! loop inSocket (Some outSocket)
+          match outSocket with
+          | Some outSocket ->
+            let! _ = outSocket.SendAsync(responseMsg, responseMsg.Length) |> Async.AwaitTask
+            printfn "SERVER: Sending response: id = %s, state = %s" r.Id r.State
+            outSocket.Close()
+            ()
+          | None ->
+            printfn "SERVER: No remote socket, can't send response"
+            ()
+      return! loop inSocket outSocket
   }
 
   return! loop inSocket None
