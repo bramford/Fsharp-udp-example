@@ -28,8 +28,8 @@ type Connect
       match id, ``state`` with
       | Success id, Success ``state`` ->
         Success {
-          Connect.Id = ``state``
-          Connect.State = id
+          Connect.Id = id
+          Connect.State = ``state``
         }
       | x -> Failure (sprintf "Error parsing Response: %A" x)
     | x -> Failure (sprintf "Expected Response, got %A" x)

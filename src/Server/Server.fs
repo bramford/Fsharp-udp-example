@@ -9,7 +9,7 @@ open Lib
 
 let getServerMsg(inSocket: UdpClient) = async {
   let! asyncData = inSocket.ReceiveAsync() |> Async.AwaitTask
-  return asyncData.Buffer
+  return asyncData
 }
 
 let run port = async {
@@ -24,15 +24,15 @@ let run port = async {
         | Some v -> outSocket
         | None ->
             try
-              let outSocket = new UdpClient(inSocket.Client.RemoteEndPoint.AddressFamily)
-              let outEndpoint = inSocket.Client.RemoteEndPoint :?> IPEndPoint
-              outSocket.Connect(outEndpoint)
+              let outSocket = new UdpClient(msg.RemoteEndPoint)
               Some outSocket
             with
-            | _ -> None
+            | e ->
+              printfn "%s" e.Message
+              None
 
       let parseResult =
-          parseJson (Encoding.ASCII.GetString(msg))
+          parseJson (Encoding.ASCII.GetString(msg.Buffer))
       match parseResult with
       | Error e ->
           printf "SERVER: Failed parsing: %s\n" e
