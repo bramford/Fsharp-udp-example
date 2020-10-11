@@ -27,18 +27,14 @@ let run port = async {
           ()
       | Ok r ->
           printfn "SERVER: Received message: id = %s, state = %s" r.Id r.State
-          let responseMsg = Encoding.ASCII.GetBytes((toJson {
+          let response = {
                         Connect.Id = r.Id
                         State = "received"
-                      }).ToString())
+                      }
+          let responseMsg = Encoding.ASCII.GetBytes((toJson response).ToString())
           try
-            printfn "SERVER: Sending response: id = %s, state = %s" r.Id r.State
             let! result = inSocket.SendAsync(responseMsg, responseMsg.Length, msg.RemoteEndPoint) |> Async.AwaitTask
-            if (result = 1) then 
-              printfn "SERVER: Successfully sent response"
-            else
-              printfn "SERVER: Failed to send response"
-            ()
+            printfn "SERVER: Sent response: id = %s, state = %s" response.Id response.State
           with _ ->
             printfn "SERVER: No remote socket, can't send response"
             ()
