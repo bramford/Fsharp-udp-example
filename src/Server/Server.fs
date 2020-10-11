@@ -23,7 +23,7 @@ let run port = async {
           parseJson (Encoding.ASCII.GetString(msg.Buffer))
       match parseResult with
       | Error e ->
-          printf "SERVER: Failed parsing: %s\n" e
+          printfn "SERVER: Failed parsing: %s" e
           ()
       | Ok r ->
           printfn "SERVER: Received message: id = %s, state = %s" r.Id r.State

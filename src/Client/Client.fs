@@ -24,23 +24,21 @@ let run (remoteAddress : string) remotePort = async {
   let outSocket = new UdpClient()
 
   let rec loop (outSocket : UdpClient) = async {
-    let connectMsg =
-      {
-        Connect.Id = System.Guid.NewGuid().ToString()
-        State = "connect"
-      }
-    let connectMsg = connectMsg |> toJson
-    let connectMsg = connectMsg.ToString()
-    let connectMsg = Encoding.ASCII.GetBytes(connectMsg)
+    let connect = {
+      Connect.Id = System.Guid.NewGuid().ToString()
+      State = "connect"
+    }
+    let connectMsg = Encoding.ASCII.GetBytes((toJson connect).ToString())
     let! _ = outSocket.SendAsync(connectMsg, connectMsg.Length, IPEndPoint(IPAddress.Parse(remoteAddress), remotePort) ) |> Async.AwaitTask
     printfn "CLIENT: Message sent, awaiting response..."
+    // Race the reception of a response against a 10 second sleep
     let! winner = Async.Choice [
       getResponseMsg outSocket;
       sleepFor 10000;
     ]
     match winner with
     | Some Sleep -> 
-      printfn "CLIENT: No response, starting again\n"
+      printfn "CLIENT: No response, starting again"
     | Some (Data r) -> 
       let parseResult =
           parseJson (Encoding.ASCII.GetString(r.Buffer))
@@ -54,7 +52,7 @@ let run (remoteAddress : string) remotePort = async {
         do! System.Threading.Tasks.Task.Delay(1000) |> Async.AwaitTask
         ()
     | None -> 
-      printf "CLIENT: Unexpected result, starting again\n"
+      printfn "CLIENT: Unexpected result, starting again"
 
     return! loop outSocket
   }
